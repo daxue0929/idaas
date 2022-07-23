@@ -19,8 +19,7 @@
     </properties>
     <dependencies>
 
-
-        // 新版的Cloud 默认关闭了bootstrap
+        <!-- 新版的Cloud 默认关闭了bootstrap-->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-bootstrap</artifactId>
