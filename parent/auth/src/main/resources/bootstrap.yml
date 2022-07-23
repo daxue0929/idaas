@@ -1,0 +1,11 @@
+spring.application.name=auth
+
+spring.cloud.nacos.config.server-addr=119.45.168.251:8848
+spring.cloud.nacos.config.enabled=true
+spring.cloud.nacos.config.namespace=dev
+spring.cloud.nacos.config.file-extension=yml
+spring.cloud.nacos.config.prefix=auth
+
+
+spring.cloud.nacos.discovery.server-addr=119.45.168.251:8848
+spring.cloud.nacos.discovery.namespace=dev
