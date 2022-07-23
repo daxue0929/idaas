@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class TestController {
 
-
     //测试nacos配置中心是否生效
     @Value("${test}")
     public String value;
