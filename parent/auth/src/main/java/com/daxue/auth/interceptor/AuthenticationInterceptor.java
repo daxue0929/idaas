@@ -28,7 +28,7 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
 
-        //不是映射到方法，直接通过
+        //不是映射到方法，可能是静态资源，直接通过
         if (!(handler instanceof HandlerMethod)) {
             log.info("Passed Without Check The Token");
             return true;
