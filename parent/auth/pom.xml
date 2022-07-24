@@ -96,6 +96,7 @@
             <scope>test</scope>
         </dependency>
 
+
         <dependency>
             <groupId>com.daxue</groupId>
             <artifactId>common</artifactId>
