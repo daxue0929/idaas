@@ -1,10 +1,12 @@
 package com.daxue.auth.controller;
 
 import com.daxue.auth.annotation.PassToken;
+import com.daxue.auth.common.service.TokenService;
+import com.nimbusds.jose.JOSEException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.commons.codec.binary.Base64;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,10 +22,17 @@ import java.util.Map;
 @RestController
 public class TokenController extends BaseController{
 
+    final TokenService tokenService;
+
+    @Autowired
+    public TokenController(TokenService tokenService) {
+        this.tokenService = tokenService;
+    }
+
 
     @PassToken
     @PostMapping("/get_token")
-    public Map<String,Object> getToken(@RequestBody TokenUser tokenUser) {
+    public Map<String,Object> getToken(@RequestBody TokenUser tokenUser) throws JOSEException {
         HashMap<String, Object> resultMap = new HashMap<>();
         String username = tokenUser.getUsername();
         /**
@@ -31,7 +40,9 @@ public class TokenController extends BaseController{
          * 1. 支持生成两种类型的token，RSA非对称，
          * RS对称。
          */
-        resultMap.put("access_token", Base64.encodeBase64String(username.getBytes()));
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("username", username);
+        resultMap.put("access_token", tokenService.generateRSAToken(map));
         return sendBaseNormalMap(resultMap);
     }
 }
