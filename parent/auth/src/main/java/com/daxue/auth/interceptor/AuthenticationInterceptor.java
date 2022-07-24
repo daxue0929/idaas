@@ -2,10 +2,12 @@ package com.daxue.auth.interceptor;
 
 import com.alibaba.fastjson.JSONObject;
 import com.daxue.auth.annotation.PassToken;
+import com.daxue.auth.common.service.TokenService;
 import com.daxue.auth.utils.StatusCode;
 import com.sun.deploy.net.HttpUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
@@ -24,6 +26,10 @@ import java.lang.reflect.Method;
 
 @Slf4j
 public class AuthenticationInterceptor implements HandlerInterceptor {
+
+
+    @Autowired
+    TokenService tokenService;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -45,7 +51,18 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
         }
         String token = getToken(request);
         if (StringUtils.isBlank(token)) {
-            return result(response, "token 不存在");
+            return result(response, StatusCode.TOKEN_NOT_FOUND,"token not found");
+        }
+        if (tokenService.verifyPublic(token)) {
+            String username = tokenService.getUsername(token);
+            /**
+             * todo...
+             * 1. 判断账号的状态是否有效等等
+             * 2. 把token中封装的值都拿出来: 后续看有什么作用，怎么传下去，或者全局的处理一个逻辑。(待定)
+             * 3. 判断账号类型，看此类型具有哪些权限。：(权限模型待定)
+             */
+        }else {
+            return result(response,StatusCode.TOKEN_INVALID, "token invalid");
         }
 
         return true;
@@ -63,9 +80,9 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
     }
 
 
-    public boolean result(HttpServletResponse httpServletResponse, String msg) {
+    public boolean result(HttpServletResponse httpServletResponse, Long code, String msg) {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("return_code", StatusCode.SESSION_EXPIRE);
+        jsonObject.put("return_code", code);
         jsonObject.put("return_msg", msg);
         httpServletResponse.setCharacterEncoding("UTF-8");
         httpServletResponse.setContentType("application/json; charset=utf-8");

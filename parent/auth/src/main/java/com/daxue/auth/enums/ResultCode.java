@@ -124,8 +124,8 @@ public enum ResultCode {
     PASSWORD_RESET_FAILED_PASSWORD_NOT_ALLOWED(1108, "更新密码失败,请检查密码是否合法"),
 
     USER_REGISTER_MEET_AN_EXCEPTION(1109, "用户注册登记遇到一个异常"),
-    //TODO 状态码冲突
-    USER_NO_LIMIT(1114, "用户登录子应用权限限制"),
+
+
 
     USER_NO_SUB(1111, "用户子账号不存在"),
 
@@ -197,7 +197,10 @@ public enum ResultCode {
     SAML_REGIST_IS_ERROR(6002,"saml校验发生错误，请检查携带参数是否符合标准"),
 
     SAML_RETURN_ERROR(6003,"saml返回断言失败"),
-            ;
+
+
+
+    ;
 
     private int code;
 

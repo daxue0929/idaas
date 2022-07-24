@@ -9,8 +9,15 @@ import com.nimbusds.jose.JWSObject;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.Payload;
 import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.experimental.Accessors;
 import org.springframework.stereotype.Service;
+
 import java.io.File;
 
 import java.io.FileInputStream;
@@ -23,6 +30,7 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Map;
@@ -34,6 +42,7 @@ import java.util.Map;
  **/
 @Service
 public class TokenService {
+
 
     String publicKeyString = "-----BEGIN PUBLIC KEY-----\n" +
             "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAz5SepSkXjX8wAlQM25QM\n" +
@@ -74,13 +83,17 @@ public class TokenService {
             "lqgYHZSaroGP7fVdjSjq0NNF\n" +
             "-----END PRIVATE KEY-----\n";
 
+    public RSAKey rsaJWK;
+
+    TokenService() throws InvalidKeySpecException, NoSuchAlgorithmException {
+        PrivateKey privateKey = getPrivateKey();
+        RSAPublicKey publicKey = getPublicKey();
+        rsaJWK = new RSAKey.Builder(publicKey).privateKey(privateKey).build();
+    }
 
 
     public String generateRSAToken(Map<String, Object> payload) {
         try {
-            PrivateKey privateKey = getPrivateKey();
-            RSAPublicKey publicKey = getPublicKey();
-            RSAKey rsaJWK = new RSAKey.Builder(publicKey).privateKey(privateKey).build();
             JWSSigner signer = new RSASSASigner(rsaJWK);
             JWSObject jwsObject = new JWSObject(
                     new JWSHeader.Builder(JWSAlgorithm.RS256).keyID(rsaJWK.getKeyID()).build(),
@@ -88,7 +101,7 @@ public class TokenService {
             jwsObject.sign(signer);
             String token = jwsObject.serialize();
             return token;
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
@@ -101,20 +114,49 @@ public class TokenService {
         ).replaceAll("\n", "").replaceAll(" ", "");
         byte[] clear = Base64.getDecoder().decode(privateKey.getBytes());
         PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(clear);
-        KeyFactory fact = KeyFactory.getInstance("RSA");
-        PrivateKey aPrivate = fact.generatePrivate(keySpec);
+        KeyFactory factory = KeyFactory.getInstance("RSA");
+        PrivateKey aPrivate = factory.generatePrivate(keySpec);
         Arrays.fill(clear, (byte) 0);
         return aPrivate;
     }
 
     public RSAPublicKey getPublicKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
-         String publicKey = publicKeyString.replaceAll(
-                 "-----(.*)-----(\r\n?|\n|)([\\s\\S]*)(\r\n?|\n|)-----(.*)-----",
-                 "$3"
-         ).replaceAll("\n", "").replaceAll(" ", "");
-         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-         X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(BaseEncoding.base64().decode(publicKey));
-         RSAPublicKey rsaPublicKey = (RSAPublicKey) keyFactory.generatePublic(publicKeySpec);
-         return rsaPublicKey;
-     }
+        String publicKey = publicKeyString.replaceAll(
+                "-----(.*)-----(\r\n?|\n|)([\\s\\S]*)(\r\n?|\n|)-----(.*)-----",
+                "$3"
+        ).replaceAll("\n", "").replaceAll(" ", "");
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(BaseEncoding.base64().decode(publicKey));
+        RSAPublicKey rsaPublicKey = (RSAPublicKey) keyFactory.generatePublic(publicKeySpec);
+        return rsaPublicKey;
+    }
+
+    public String getUsername(String token) {
+        try {
+            if (verifyPublic(token)) {
+                SignedJWT signedJWT  = SignedJWT.parse(token);
+                JWTClaimsSet jwtClaimsSet = signedJWT.getJWTClaimsSet();
+                String username = String.valueOf(jwtClaimsSet.getClaim("username"));
+                return username;
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public boolean verifyPublic(String token) {
+        try {
+            SignedJWT signedJWT  = SignedJWT.parse(token);
+            RSASSAVerifier verifier = new RSASSAVerifier(rsaJWK.toPublicJWK());
+            return signedJWT.verify(verifier);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        } catch (JOSEException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }
+
+

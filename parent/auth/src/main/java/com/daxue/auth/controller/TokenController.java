@@ -29,17 +29,17 @@ public class TokenController extends BaseController{
         this.tokenService = tokenService;
     }
 
-
+    /**
+     * 获取token接口
+     * @param tokenUser
+     * @return
+     * @throws JOSEException
+     */
     @PassToken
     @PostMapping("/get_token")
     public Map<String,Object> getToken(@RequestBody TokenUser tokenUser) throws JOSEException {
         HashMap<String, Object> resultMap = new HashMap<>();
         String username = tokenUser.getUsername();
-        /**
-         * todo
-         * 1. 支持生成两种类型的token，RSA非对称，
-         * RS对称。
-         */
         HashMap<String, Object> map = new HashMap<>();
         map.put("username", username);
         resultMap.put("access_token", tokenService.generateRSAToken(map));
